@@ -23,10 +23,10 @@
     font-family:ui-sans-serif,-apple-system,"PingFang TC","Helvetica Neue",sans-serif;
     line-height:1.55;-webkit-font-smoothing:antialiased;}
   .wrap{max-width:680px;margin:0 auto;padding:36px 20px calc(56px + env(safe-area-inset-bottom));}
-  .brand{display:flex;align-items:center;gap:11px;margin:0 0 22px;}
-  .brand svg{width:38px;height:38px;flex:none;border-radius:10px;}
-  .brand .bword{font-weight:760;font-size:16px;line-height:1.12;}
-  .brand .bword small{display:block;font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:var(--muted);margin-top:4px;}
+  .brand{display:flex;align-items:center;gap:12px;margin:0 0 22px;}
+  .brand .mark{width:46px;height:46px;flex:none;}
+  .brand .bword b{display:block;font:800 22px/1 "Arial Rounded MT Bold",ui-rounded,system-ui,"Helvetica Neue",sans-serif;color:#FF6B35;letter-spacing:-.01em;}
+  .brand .bword small{display:block;font-size:12.5px;font-weight:600;color:var(--text);letter-spacing:.34em;margin-top:6px;}
   .eyebrow{font:600 11.5px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.22em;
     text-transform:uppercase;color:var(--fin);margin:0 0 16px;}
   h1{font-size:clamp(28px,7vw,42px);font-weight:780;letter-spacing:-.02em;margin:0 0 14px;line-height:1.12;}
@@ -101,13 +101,12 @@
 <body>
 <div class="wrap">
   <header class="brand">
-    <svg viewBox="0 0 64 64" role="img" aria-label="橘子股市 Orange Finance">
-      <rect width="64" height="64" rx="14" fill="#1A1410"/>
-      <path d="M40 16 L40 42 Q40 52 30 52 Q20 52 18 42" stroke="#FF6B35" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <ellipse cx="40" cy="14" rx="10" ry="3" fill="#FF6B35"/>
-      <path d="M40 11 Q48 4 54 8 Q50 14 42 12 Z" fill="#6B8E4E"/>
+    <svg class="mark" viewBox="0 0 64 64" role="img" aria-label="Orange 投資觀測">
+      <rect width="64" height="64" rx="15" fill="#10161F"/>
+      <circle cx="32" cy="36" r="14.5" fill="none" stroke="#FF6B35" stroke-width="7.5"/>
+      <rect x="19" y="12.5" width="26" height="6.5" rx="3.25" fill="#FF6B35"/>
     </svg>
-    <span class="bword">橘子股市<small>ORANGE FINANCE</small></span>
+    <span class="bword"><b>Orange</b><small>投資觀測</small></span>
   </header>
   <p class="eyebrow">避險資產比較 · 每日數據</p>
   <h1>科技回檔時：<em>金融保險與黃金</em>誰抗跌</h1>
