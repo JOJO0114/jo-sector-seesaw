@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>產業蹺蹺板 — 科技 vs 金融保險</title>
-<meta name="description" content="科技股殺盤時，金融保險在接盤？用每日數據看兩個產業的避險反向關係。">
+<title>科技 vs 金融保險 — 避險相關性分析</title>
+<meta name="description" content="用每日收盤價，量化科技股與金融保險兩個產業在不同期間的相關性與下檔避險表現。">
 <style>
   :root{
     --ground:#1B2430; --panel:#222E3C; --panel2:#1f2a37; --line:#33424F;
@@ -38,6 +38,8 @@
   .toggle button[aria-pressed="true"]{background:var(--fin);color:#fff;}
   .toggle button:focus-visible{outline:2px solid var(--tech);outline-offset:2px;}
   .period-note{color:var(--muted);font-size:12.5px;margin:0 0 22px;font-family:ui-monospace,Menlo,monospace;}
+  .toggle.small{margin:0 0 14px;}
+  .toggle.small button{padding:7px 16px;font-size:13px;}
 
   /* stats */
   .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 24px;}
@@ -82,9 +84,9 @@
 </head>
 <body>
 <div class="wrap">
-  <p class="eyebrow">產業蹺蹺板 · 每日數據</p>
-  <h1>科技股殺盤時，<em>金融保險</em>在接盤？</h1>
-  <p class="lede">當成長型的<b>科技股</b>急跌，資金常輪動到防禦型的<b>金融保險</b>。我們用每日收盤價，量化這兩個產業的「避險反向」關係。</p>
+  <p class="eyebrow">產業相關性分析 · 每日數據</p>
+  <h1>科技 vs 金融保險：<em>避險反向</em>的數據檢驗</h1>
+  <p class="lede">成長型的<b>科技股</b>與防禦型的<b>金融保險</b>，短期報酬常呈負相關。本頁以每日收盤價，量化兩個產業在不同期間的相關性與下檔避險表現，並檢驗這個反向關係在多長的時間尺度上成立。</p>
   <p class="sub">科技股以 Nasdaq-100（QQQ）為代表，金融保險以 S&amp;P Insurance（KIE）為代表。</p>
 
   <div class="toggle" role="group" aria-label="期間切換">
@@ -97,7 +99,7 @@
 
   <div class="card">
     <h2>兩產業標準化報酬走勢</h2>
-    <p class="cap">起點 = 0 %。橘線在科技急跌時翻揚，就是避險接棒的訊號。滑/觸圖表看單日。</p>
+    <p class="cap">起點 = 0 %。觀察科技急跌時，金融保險的相對走向。滑/觸圖表看單日數值。</p>
     <div class="legend">
       <span><i style="background:var(--tech)"></i>科技股</span>
       <span><i style="background:var(--fin)"></i>金融保險</span>
@@ -109,8 +111,12 @@
   <div class="insight" id="insight"></div>
 
   <div class="card">
-    <p class="tcap">金融保險 — 前三大代表個股</p>
-    <p class="tsub">市值最大的三檔 P&amp;C 保險股快照（2026/6/18）。</p>
+    <div class="toggle small" role="group" aria-label="產業切換">
+      <button id="sFin" aria-pressed="true">金融保險</button>
+      <button id="sTech" aria-pressed="false">科技股</button>
+    </div>
+    <p class="tcap" id="tcap"></p>
+    <p class="tsub" id="tsub"></p>
     <div class="tscroll"><table>
       <thead><tr><th class="name">標的</th><th>現價</th><th>YTD</th><th>當日</th><th>目標上檔</th><th>市值</th></tr></thead>
       <tbody id="peers"></tbody>
@@ -126,11 +132,25 @@ const KIE=[["2025-12-18",61.01],["2025-12-19",60.94],["2025-12-22",61.0],["2025-
 const dates=QQQ.map(r=>r[0]);
 const q=QQQ.map(r=>r[1]), k=KIE.map(r=>r[1]);
 const Q_START=dates.indexOf("2026-03-19");           // 近一季起點
-const peers=[
+const FIN=[
  {t:"CB",n:"Chubb",p:323.40,tg:345.04,mc:"125.4B",d:-1.39,ytd:3.6},
  {t:"PGR",n:"Progressive",p:204.87,tg:230.86,mc:"119.5B",d:0.22,ytd:-10.0},
  {t:"TRV",n:"Travelers",p:307.81,tg:312.91,mc:"65.5B",d:0.57,ytd:6.1},
 ];
+const TECH=[
+ {t:"NVDA",n:"Nvidia",p:210.69,tg:298.93,mc:"5.10T",d:2.95,ytd:13.11},
+ {t:"AAPL",n:"Apple",p:298.01,tg:313.62,mc:"4.38T",d:0.70,ytd:9.82},
+ {t:"MSFT",n:"Microsoft",p:379.40,tg:561.39,mc:"2.82T",d:0.13,ytd:-21.2},
+ {t:"AVGO",n:"Broadcom",p:411.35,tg:522.06,mc:"1.96T",d:4.70,ytd:19.1},
+ {t:"AMZN",n:"Amazon",p:244.39,tg:312.99,mc:"2.63T",d:2.90,ytd:5.88},
+ {t:"META",n:"Meta Platforms",p:577.22,tg:827.32,mc:"1.47T",d:1.70,ytd:-12.4},
+ {t:"NFLX",n:"Netflix",p:77.38,tg:114.15,mc:"325.8B",d:0.55,ytd:-17.47},
+ {t:"GOOGL",n:"Alphabet",p:368.03,tg:432.83,mc:"4.49T",d:1.17,ytd:17.73},
+ {t:"TSLA",n:"Tesla",p:400.49,tg:420.55,mc:"1.50T",d:1.04,ytd:-10.95},
+ {t:"COST",n:"Costco",p:951.45,tg:1082.94,mc:"422.0B",d:-1.46,ytd:10.64},
+];
+const PEERS={fin:{rows:FIN,cap:"金融保險 — 前三大代表個股",sub:"市值最大的三檔 P&C 保險股快照（2026/6/18）。"},
+             tech:{rows:TECH,cap:"科技股 — 前十大代表個股",sub:"Nasdaq-100（QQQ）權重前十大成分股快照（2026/6/18）。"}};
 
 // %-with-space helper
 const pctU=(x,dp=1)=>`${x>=0?'+':''}${x.toFixed(dp)}<span class="u">%</span>`;
@@ -163,8 +183,8 @@ function render(){
     <div class="stat"><div class="v fin">${m.hit.toFixed(0)}<span class="u">%</span></div><div class="l">科技急跌日金融保險逆勢上漲（${m.up}/${m.dn}）</div></div>`;
   // insight
   const ins=cur==="Q"
-    ? `近一季科技 ${sp(m.qret)}、金融保險 ${sp(m.kret)}。科技急跌（單日 &lt;−1 %）的 ${m.dn} 天裡，金融保險有 <b>${m.up} 天逆勢翻紅（${m.hit.toFixed(0)} %）</b>——避險接棒很明顯。`
-    : `拉長到近半年，金融保險其實 ${sp(m.kret)}（落後科技 ${sp(m.qret)}），急跌日反向命中率掉到 <b>${m.hit.toFixed(0)} %</b>、相關係數近乎零。<b>反向是短打、不是長抱</b>——它是恐慌日的壓艙石，不是長期反指標。`;
+    ? `近一季科技 ${sp(m.qret)}、金融保險 ${sp(m.kret)}。科技單日下跌逾 1 % 的 ${m.dn} 個交易日中，金融保險有 <b>${m.up} 天收紅（${m.hit.toFixed(0)} %）</b>，相關係數 ${m.corr>=0?'+':'−'}${Math.abs(m.corr).toFixed(2)}——短期呈現負相關的下檔避險特性。`
+    : `拉長到近半年，金融保險 ${sp(m.kret)}、落後科技 ${sp(m.qret)}；急跌日反向比率降至 <b>${m.hit.toFixed(0)} %</b>、相關係數近乎零（${m.corr>=0?'+':'−'}${Math.abs(m.corr).toFixed(2)}）。負相關主要是短期現象，時間拉長後明顯減弱——避險特性偏戰術性，不宜當長期反向指標。`;
   document.getElementById("insight").innerHTML=ins;
   draw(m);
 }
@@ -211,15 +231,24 @@ function draw(m){
   svg.onmouseleave=()=>{guide.setAttribute("opacity",0);dq.setAttribute("opacity",0);dk.setAttribute("opacity",0);};
 }
 
-// peers table
-document.getElementById("peers").innerHTML=peers.map(r=>{
-  const up=(r.tg/r.p-1)*100;
-  return `<tr><td class="name"><b>${r.t}</b><small>${r.n}</small></td>
-    <td>${r.p.toFixed(2)}</td>
-    <td class="${r.ytd>=0?'pos':'neg'}">${r.ytd>=0?'+':''}${r.ytd.toFixed(1)} %</td>
-    <td class="${r.d>=0?'pos':'neg'}">${r.d>=0?'+':''}${r.d.toFixed(2)} %</td>
-    <td class="${up>=0?'pos':'neg'}">${up>=0?'+':''}${up.toFixed(1)} %</td>
-    <td>${r.mc}</td></tr>`;}).join("");
+// peers table (切換 金融保險 / 科技股)
+function renderPeers(side){
+  const cfg=PEERS[side];
+  document.getElementById("tcap").textContent=cfg.cap;
+  document.getElementById("tsub").textContent=cfg.sub;
+  document.getElementById("peers").innerHTML=cfg.rows.map(r=>{
+    const up=(r.tg/r.p-1)*100;
+    return `<tr><td class="name"><b>${r.t}</b><small>${r.n}</small></td>
+      <td>${r.p.toFixed(2)}</td>
+      <td class="${r.ytd>=0?'pos':'neg'}">${r.ytd>=0?'+':''}${r.ytd.toFixed(1)} %</td>
+      <td class="${r.d>=0?'pos':'neg'}">${r.d>=0?'+':''}${r.d.toFixed(2)} %</td>
+      <td class="${up>=0?'pos':'neg'}">${up>=0?'+':''}${up.toFixed(1)} %</td>
+      <td>${r.mc}</td></tr>`;}).join("");
+}
+const sFin=document.getElementById("sFin"),sTech=document.getElementById("sTech");
+sFin.onclick=()=>{renderPeers("fin");sFin.setAttribute("aria-pressed","true");sTech.setAttribute("aria-pressed","false");};
+sTech.onclick=()=>{renderPeers("tech");sTech.setAttribute("aria-pressed","true");sFin.setAttribute("aria-pressed","false");};
+renderPeers("fin");
 
 const btnQ=document.getElementById("btnQ"),btnH=document.getElementById("btnH");
 btnQ.onclick=()=>{cur="Q";btnQ.setAttribute("aria-pressed","true");btnH.setAttribute("aria-pressed","false");render();};
