@@ -48,13 +48,22 @@
   .toggle.small button{padding:7px 16px;font-size:13px;}
 
   /* stats */
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 24px;}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px;}
-  .stat .v{font:760 clamp(26px,8vw,34px)/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:-.01em;
+  .stats{margin:0 0 24px;}
+  .hero-stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin:0 0 18px;}
+  .hero-stat .v{font:780 clamp(42px,13vw,58px)/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:-.02em;display:flex;align-items:baseline;color:var(--tech);}
+  .hero-stat .v .u{font-size:.5em;font-weight:600;margin-left:.18em;opacity:.92;}
+  .hero-stat .l{color:var(--muted);font-size:13.5px;margin-top:10px;}
+  .hedge-row{margin:0 0 14px;}
+  .hedge-label{font-weight:760;font-size:14.5px;margin:0 0 9px;display:flex;align-items:center;gap:8px;}
+  .hedge-label::before{content:"";width:11px;height:11px;border-radius:3px;background:currentColor;}
+  .hedge-label.fin{color:var(--fin);} .hedge-label.gold{color:var(--gold);}
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 13px;}
+  .stat .v{font:760 clamp(20px,6.2vw,27px)/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:-.01em;
     display:flex;align-items:baseline;}
-  .stat .v .u{font-size:.62em;font-weight:600;margin-left:.18em;color:inherit;opacity:.92;} /* % 前空格 */
+  .stat .v .u{font-size:.6em;font-weight:600;margin-left:.16em;color:inherit;opacity:.92;} /* % 前空格 */
   .v.tech{color:var(--tech);} .v.fin{color:var(--fin);} .v.gold{color:var(--gold);}
-  .stat .l{color:var(--muted);font-size:12.5px;margin-top:8px;}
+  .stat .l{color:var(--muted);font-size:11.5px;margin-top:7px;line-height:1.4;}
 
   /* chart */
   .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 16px 12px;margin:0 0 22px;}
@@ -198,13 +207,23 @@ function render(){
   // stats
   const cf=x=>`${x>=0?'+':'−'}${Math.abs(x).toFixed(2)}`;
   document.getElementById("stats").innerHTML=`
-    <div class="stat"><div class="v tech">${pctU(m.qret)}</div><div class="l">科技股報酬</div></div>
-    <div class="stat"><div class="v fin">${pctU(m.kret)}</div><div class="l">金融保險報酬</div></div>
-    <div class="stat"><div class="v gold">${pctU(m.gret)}</div><div class="l">黃金報酬（GLD）</div></div>
-    <div class="stat"><div class="v fin">${cf(m.corr)}</div><div class="l">相關係數<br>科技 × 金融保險</div></div>
-    <div class="stat"><div class="v gold">${cf(m.gcorr)}</div><div class="l">相關係數<br>科技 × 黃金</div></div>
-    <div class="stat"><div class="v fin">${m.hit.toFixed(0)}<span class="u">%</span></div><div class="l">金融保險急跌日逆勢上漲（${m.up}/${m.dn}）</div></div>
-    <div class="stat"><div class="v gold">${m.ghit.toFixed(0)}<span class="u">%</span></div><div class="l">黃金急跌日逆勢上漲（${m.gup}/${m.dn}）</div></div>`;
+    <div class="hero-stat"><div class="v">${pctU(m.qret)}</div><div class="l">科技股報酬（基準）</div></div>
+    <div class="hedge-row">
+      <div class="hedge-label fin">金融保險</div>
+      <div class="metrics">
+        <div class="stat"><div class="v fin">${pctU(m.kret)}</div><div class="l">報酬</div></div>
+        <div class="stat"><div class="v fin">${cf(m.corr)}</div><div class="l">相關係數<br>vs 科技</div></div>
+        <div class="stat"><div class="v fin">${m.hit.toFixed(0)}<span class="u">%</span></div><div class="l">急跌日逆勢<br>（${m.up}/${m.dn}）</div></div>
+      </div>
+    </div>
+    <div class="hedge-row">
+      <div class="hedge-label gold">黃金</div>
+      <div class="metrics">
+        <div class="stat"><div class="v gold">${pctU(m.gret)}</div><div class="l">報酬</div></div>
+        <div class="stat"><div class="v gold">${cf(m.gcorr)}</div><div class="l">相關係數<br>vs 科技</div></div>
+        <div class="stat"><div class="v gold">${m.ghit.toFixed(0)}<span class="u">%</span></div><div class="l">急跌日逆勢<br>（${m.gup}/${m.dn}）</div></div>
+      </div>
+    </div>`;
   // insight
   const ins=cur==="Q"
     ? `近一季科技 ${sp(m.qret)}、金融保險 ${sp(m.kret)}、黃金 ${sp(m.gret)}。科技單日下跌逾 1 % 的 ${m.dn} 天中，金融保險有 <b>${m.up} 天收紅（${m.hit.toFixed(0)} %）</b>，黃金僅 ${m.gup} 天。同期黃金反而走弱——6/5 科技 −4.8 % 當天，金融保險 +3.0 %、黃金 −3.7 %。這段期間真正抗跌的避險是<b>金融保險，不是黃金</b>。`
