@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>科技 vs 金融保險 — 避險相關性分析</title>
 <meta name="description" content="用每日收盤價，量化科技股與金融保險兩個產業在不同期間的相關性與下檔避險表現。">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
   :root{
     --ground:#1B2430; --panel:#222E3C; --panel2:#1f2a37; --line:#33424F;
@@ -22,6 +23,10 @@
     font-family:ui-sans-serif,-apple-system,"PingFang TC","Helvetica Neue",sans-serif;
     line-height:1.55;-webkit-font-smoothing:antialiased;}
   .wrap{max-width:680px;margin:0 auto;padding:36px 20px calc(56px + env(safe-area-inset-bottom));}
+  .brand{display:flex;align-items:center;gap:11px;margin:0 0 22px;}
+  .brand svg{width:38px;height:38px;flex:none;border-radius:10px;}
+  .brand .bword{font-weight:760;font-size:16px;line-height:1.12;}
+  .brand .bword small{display:block;font:600 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:var(--muted);margin-top:4px;}
   .eyebrow{font:600 11.5px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.22em;
     text-transform:uppercase;color:var(--fin);margin:0 0 16px;}
   h1{font-size:clamp(28px,7vw,42px);font-weight:780;letter-spacing:-.02em;margin:0 0 14px;line-height:1.12;}
@@ -86,6 +91,15 @@
 </head>
 <body>
 <div class="wrap">
+  <header class="brand">
+    <svg viewBox="0 0 64 64" role="img" aria-label="橘子股市 Orange Finance">
+      <rect width="64" height="64" rx="14" fill="#1A1410"/>
+      <path d="M40 16 L40 42 Q40 52 30 52 Q20 52 18 42" stroke="#FF6B35" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <ellipse cx="40" cy="14" rx="10" ry="3" fill="#FF6B35"/>
+      <path d="M40 11 Q48 4 54 8 Q50 14 42 12 Z" fill="#6B8E4E"/>
+    </svg>
+    <span class="bword">橘子股市<small>ORANGE FINANCE</small></span>
+  </header>
   <p class="eyebrow">避險資產比較 · 每日數據</p>
   <h1>科技回檔時：<em>金融保險與黃金</em>誰抗跌</h1>
   <p class="lede">成長型<b>科技股</b>回檔時，資金常轉向避險資產。本頁用每日收盤價，比較兩種常見避險選項——<b>金融保險</b>與<b>黃金</b>——在科技急跌時的真實表現，並檢驗反向關係在多長的時間尺度上成立。</p>
@@ -165,13 +179,15 @@ function compute(start){
   const qp=qs.map(v=>(v/qs[0]-1)*100), kp=ks.map(v=>(v/ks[0]-1)*100), gp=gs.map(v=>(v/gs[0]-1)*100);
   const qr=[],kr=[],gr=[];
   for(let i=1;i<qs.length;i++){qr.push(qs[i]/qs[i-1]-1);kr.push(ks[i]/ks[i-1]-1);gr.push(gs[i]/gs[i-1]-1);}
-  const n=qr.length, mq=qr.reduce((a,b)=>a+b,0)/n, mk=kr.reduce((a,b)=>a+b,0)/n;
-  let cov=0,vq=0,vk=0;
-  for(let i=0;i<n;i++){cov+=(qr[i]-mq)*(kr[i]-mk);vq+=(qr[i]-mq)**2;vk+=(kr[i]-mk)**2;}
-  const corr=cov/Math.sqrt(vq*vk);
+  const n=qr.length, mq=qr.reduce((a,b)=>a+b,0)/n, mk=kr.reduce((a,b)=>a+b,0)/n, mg=gr.reduce((a,b)=>a+b,0)/n;
+  let cov=0,vq=0,vk=0,covg=0,vg=0;
+  for(let i=0;i<n;i++){cov+=(qr[i]-mq)*(kr[i]-mk);vq+=(qr[i]-mq)**2;vk+=(kr[i]-mk)**2;
+    covg+=(qr[i]-mq)*(gr[i]-mg);vg+=(gr[i]-mg)**2;}
+  const corr=cov/Math.sqrt(vq*vk), gcorr=covg/Math.sqrt(vq*vg);
   let dn=0,up=0,gup=0;
   for(let i=0;i<n;i++) if(qr[i]<-0.01){dn++; if(kr[i]>0) up++; if(gr[i]>0) gup++;}
-  return {d,qp,kp,gp,qret:qp[qp.length-1],kret:kp[kp.length-1],gret:gp[gp.length-1],corr,dn,up,gup,hit:up/dn*100};
+  return {d,qp,kp,gp,qret:qp[qp.length-1],kret:kp[kp.length-1],gret:gp[gp.length-1],
+    corr,gcorr,dn,up,gup,hit:up/dn*100,ghit:gup/dn*100};
 }
 
 let cur="Q";
@@ -180,12 +196,15 @@ function render(){
   document.getElementById("periodNote").textContent=
     `${m.d[0].replace(/-/g,"/")} – ${m.d[m.d.length-1].replace(/-/g,"/")}　共 ${m.d.length} 個交易日`;
   // stats
+  const cf=x=>`${x>=0?'+':'−'}${Math.abs(x).toFixed(2)}`;
   document.getElementById("stats").innerHTML=`
     <div class="stat"><div class="v tech">${pctU(m.qret)}</div><div class="l">科技股報酬</div></div>
     <div class="stat"><div class="v fin">${pctU(m.kret)}</div><div class="l">金融保險報酬</div></div>
     <div class="stat"><div class="v gold">${pctU(m.gret)}</div><div class="l">黃金報酬（GLD）</div></div>
-    <div class="stat"><div class="v">${m.corr>=0?'+':'−'}${Math.abs(m.corr).toFixed(2)}</div><div class="l">日報酬相關係數<br>（科技 vs 金融保險）</div></div>
-    <div class="stat"><div class="v fin">${m.hit.toFixed(0)}<span class="u">%</span></div><div class="l">科技急跌日金融保險逆勢上漲（${m.up}/${m.dn}）</div></div>`;
+    <div class="stat"><div class="v fin">${cf(m.corr)}</div><div class="l">相關係數<br>科技 × 金融保險</div></div>
+    <div class="stat"><div class="v gold">${cf(m.gcorr)}</div><div class="l">相關係數<br>科技 × 黃金</div></div>
+    <div class="stat"><div class="v fin">${m.hit.toFixed(0)}<span class="u">%</span></div><div class="l">金融保險急跌日逆勢上漲（${m.up}/${m.dn}）</div></div>
+    <div class="stat"><div class="v gold">${m.ghit.toFixed(0)}<span class="u">%</span></div><div class="l">黃金急跌日逆勢上漲（${m.gup}/${m.dn}）</div></div>`;
   // insight
   const ins=cur==="Q"
     ? `近一季科技 ${sp(m.qret)}、金融保險 ${sp(m.kret)}、黃金 ${sp(m.gret)}。科技單日下跌逾 1 % 的 ${m.dn} 天中，金融保險有 <b>${m.up} 天收紅（${m.hit.toFixed(0)} %）</b>，黃金僅 ${m.gup} 天。同期黃金反而走弱——6/5 科技 −4.8 % 當天，金融保險 +3.0 %、黃金 −3.7 %。這段期間真正抗跌的避險是<b>金融保險，不是黃金</b>。`
